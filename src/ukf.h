@@ -12,7 +12,27 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
 class UKF {
-public:
+ private:
+
+  long long previous_timestamp_;
+  void InitMeasurement(MeasurementPackage meas_package);
+  void ProcessRadarMeasurement(MeasurementPackage meas_package, float dt);
+  void ProcessLaserMeasurement(MeasurementPackage meas_package, float dt);
+  void GenerateAugmentedSigmaPoints();
+  void PredictSigmaPoints(double delta_t);
+  void PredictMeanAndCovariance();
+  void PredictRadarMeasurement();
+  void UpdateStateWithRadar(VectorXd z);
+  void UpdateStateWithLaser(VectorXd z);
+  void UpdateStateCommon(VectorXd z,      // actual measurement
+			 VectorXd z_pred, // predicted measurement
+			 MatrixXd Zsig,   // predicted sigma points
+			 MatrixXd Tc,     // Cross correlation matrix
+			 MatrixXd S,      // Measurement covariance (uncertainty)
+			 MatrixXd R);    // Measurement noise covariance (uncertainty)
+  
+
+ public:
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
@@ -29,7 +49,39 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
-  ///* predicted sigma points matrix
+  ///* augmented state [pos1 pos2 vel_abs yaw_angle yaw_rate xxx xxx] in SI units and rad
+  VectorXd x_aug_;
+
+  ///* augmented sigma points
+  MatrixXd Xsig_aug_;
+
+  ///* augmented sigma points, in measurement space
+  MatrixXd Zsig_radar_;
+  MatrixXd Zsig_laser_;
+
+  ///* predicted measurement points
+  VectorXd z_pred_radar_;
+  VectorXd z_pred_laser_;
+
+  ///* measurement covariance matrix S
+  MatrixXd S_radar_;
+  MatrixXd S_laser_;
+
+  ///* measurement noise covariance matrix S
+  MatrixXd R_radar_;
+  MatrixXd R_laser_;
+
+  ///* cross correlation matrix Tc
+  MatrixXd Tc_radar_;
+  MatrixXd Tc_laser_;
+
+  ///* augmented state covariance matrix
+  MatrixXd P_aug_;
+
+  ///* square root of augmented covariance matrix
+  MatrixXd L_;
+
+  ///* Predicted sigma points matrix
   MatrixXd Xsig_pred_;
 
   ///* time when the state is true, in us
@@ -61,6 +113,10 @@ public:
 
   ///* State dimension
   int n_x_;
+
+  ///* Measurement dimension
+  int n_z_radar_;
+  int n_z_laser_;
 
   ///* Augmented state dimension
   int n_aug_;
