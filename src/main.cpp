@@ -156,9 +156,78 @@ int main(int argc, char* argv[]) {
   out_file_ << "NIS" << "\n";
 
 
+  Tools tools;
+  double best_score = 1e9, best_i=0.0, best_j=0.0;
+
+  // was 2.8, 3.2
+
+  if (true) {
+    for (int i=0; i < 200; i++) {
+      cout << "**Loop " << i << endl;
+      for (int j=0; j < 200; j++) {
+
+	ukf.Setup(i*0.02, j*0.02);
+	  //	ukf.Setup(2.7+i*0.01, 3.1+j*0.01);
+	
+	for (size_t k = 0; k < number_of_measurements; ++k) {
+	  
+	  // Call the UKF-based fusion
+	  ukf.ProcessMeasurement(measurement_pack_list[k]);
+	  
+	  // convert ukf x vector to cartesian to compare to ground truth
+	  VectorXd ukf_x_cartesian_ = VectorXd(4);
+	  
+	  float x_estimate_ = ukf.x_(0);
+	  float y_estimate_ = ukf.x_(1);
+	  float vx_estimate_ = ukf.x_(2) * cos(ukf.x_(3));
+	  float vy_estimate_ = ukf.x_(2) * sin(ukf.x_(3));
+	  
+	  ukf_x_cartesian_ << x_estimate_, y_estimate_, vx_estimate_, vy_estimate_;
+	  estimations.push_back(ukf_x_cartesian_);
+	  ground_truth.push_back(gt_pack_list[k].gt_values_);
+	}
+	VectorXd rmse = tools.CalculateRMSE(estimations, ground_truth);
+	double score = 0.25*(rmse[0]*100.0 + rmse[1]*100.0 + rmse[2] + rmse[3]);
+	
+	if (score < best_score) {
+	  best_score = score;
+	  cout << "Score now " << score << endl;
+	  best_i = i;
+	  best_j = j;
+	  //	  cout << "Using accel straight " << (2.7+i*0.01) << " turn " << (3.1+j*0.01) << endl;
+	  cout << "Using accel straight " << (0.02*i) << " turn " << (0.02*j) << endl;
+	}
+	
+	estimations.clear();
+	ground_truth.clear();
+      }
+    }
+  }
+
+  cout << "**Doing main loop**" << endl;
+
+  // ukf.Setup(0.56, 0.02); // for second data set
+  //  ukf.Setup(2.8, 3.2);
+
+  //  2.8, 3.2 in scenario 1
+  // 0.56, 0.02 in scenario 2
+  ukf.Setup(0.02*best_i, 0.02*best_j);
+
+  //  ukf.Setup(2.8, 3.2);
+  //  ukf.Setup(0.8, 0.8);
+  //  ukf.Setup(1.4, 1.6); 
+  //  ukf.Setup(2.8, 3.2);
+  //  ukf.Setup(0.56, 0.02);
+  //  ukf.Setup(0.02*best_i, 0.02*best_j);
+  //  ukf.Setup(0.3, 0.3);
+  //  ukf.Setup(2.7+best_i*0.01, 3.1+best_j*0.01);
+
+  //  ukf.Setup(best_i*0.2, best_j*0.2);
   for (size_t k = 0; k < number_of_measurements; ++k) {
+
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);
+    //    cout << k << ") " << ukf.x_ << endl;
 
     // output the estimation
     out_file_ << ukf.x_(0) << "\t"; // pos1 - est
@@ -198,7 +267,6 @@ int main(int argc, char* argv[]) {
       out_file_ << ukf.NIS_radar_ << "\n";
     }
 
-
     // convert ukf x vector to cartesian to compare to ground truth
     VectorXd ukf_x_cartesian_ = VectorXd(4);
 
@@ -207,9 +275,9 @@ int main(int argc, char* argv[]) {
     float vx_estimate_ = ukf.x_(2) * cos(ukf.x_(3));
     float vy_estimate_ = ukf.x_(2) * sin(ukf.x_(3));
 
-    cout << x_estimate_ << ", " << y_estimate_ << " estimated" << endl;
-    cout << gt_pack_list[k].gt_values_(0) << ", "; 
-    cout << gt_pack_list[k].gt_values_(1) << " actual" << endl; 
+    //        cout << x_estimate_ << ", " << y_estimate_ << " estimated" << endl;
+    //        cout << gt_pack_list[k].gt_values_(0) << ", "; 
+    //        cout << gt_pack_list[k].gt_values_(1) << " actual" << endl; 
     
     ukf_x_cartesian_ << x_estimate_, y_estimate_, vx_estimate_, vy_estimate_;
     
@@ -219,8 +287,7 @@ int main(int argc, char* argv[]) {
   }
 
   // compute the accuracy (RMSE)
-  Tools tools;
-  cout << "Accuracy - RMSE:" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
+    cout << "Accuracy - RMSE:" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
 
   // close files
   if (out_file_.is_open()) {
@@ -230,7 +297,6 @@ int main(int argc, char* argv[]) {
   if (in_file_.is_open()) {
     in_file_.close();
   }
-
   cout << "Done!" << endl;
   return 0;
 }

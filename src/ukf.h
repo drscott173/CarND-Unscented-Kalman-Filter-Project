@@ -21,13 +21,14 @@ class UKF {
   void GenerateAugmentedSigmaPoints();
   void PredictSigmaPoints(double delta_t);
   void PredictMeanAndCovariance();
-  void PredictRadarMeasurement();
+  bool PredictRadarMeasurement();
   void UpdateStateWithRadar(VectorXd z);
+  void PredictLaserMeasurement();
   void UpdateStateWithLaser(VectorXd z);
   void UpdateStateCommon(VectorXd z,      // actual measurement
 			 VectorXd z_pred, // predicted measurement
 			 MatrixXd Zsig,   // predicted sigma points
-			 MatrixXd Tc,     // Cross correlation matrix
+			 MatrixXd &Tc,     // Cross correlation matrix
 			 MatrixXd S,      // Measurement covariance (uncertainty)
 			 MatrixXd R);    // Measurement noise covariance (uncertainty)
   
@@ -140,6 +141,8 @@ class UKF {
    */
   virtual ~UKF();
 
+
+
   /**
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
@@ -164,6 +167,12 @@ class UKF {
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+  /**
+   * Inititialize all variables
+   */
+  void Setup(double a_straight, double a_turn);
+
 };
 
 #endif /* UKF_H */
