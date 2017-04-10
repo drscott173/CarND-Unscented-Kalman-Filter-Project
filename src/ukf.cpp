@@ -621,6 +621,7 @@ void UKF::UpdateStateWithRadar(VectorXd z) {
   // keep the cross correlation matrix
   Tc_radar_ = Tc;
 
+  /*
   if (NIS_radar_ > 12) {
     float k = 180.0/M_PI;
     cout << "predict rho " << z_pred[0] << " actual " << z[0] << endl;
@@ -628,6 +629,7 @@ void UKF::UpdateStateWithRadar(VectorXd z) {
     cout << "predict rho_dot " << z_pred[2] << " actual " << z[2] << endl;
     cout << endl;
   }
+  */
 
 }
 

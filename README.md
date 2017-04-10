@@ -30,14 +30,24 @@ test
 -s search for optimal acceleration values
 ```
 
-## Overview
+## Results
 
 ## Sample 1
 
 Use the following command:
 
-`./UnscentedKF ../data/sample-laser-radar-measurement-data-1.txt out1.txt`
+```
+% ./UnscentedKF ../data/sample-laser-radar-measurement-data-1.txt out1.txt
+Accuracy - RMSE:
+ 0.038556
+0.0443807
+ 0.483245
+ 0.502898
+Valid NIS: 65.5229%
+Done!
 
+%
+```
 We interpret the output of out1.txt below.
 
 The figure below shows how the position varies over time, forming
@@ -76,7 +86,17 @@ area as a result.
 
 Execute the following:
 
-`./UnscentedKF ../data/sample-laser-radar-measurement-data-2.txt out2.txt`
+```
+% ./UnscentedKF ../data/sample-laser-radar-measurement-data-2.txt out2.txt
+Accuracy - RMSE:
+0.154763
+0.186962
+0.292497
+0.428491
+Valid NIS: 77.7778% 
+Done!
+
+%```
 
 As before, we show the position of our object over time in blue.  Our
 predicted position is in red.  The model nails it.
@@ -100,30 +120,5 @@ direction.
 
 ![NIS 2](images/nis_2.png?raw=true "NIS Consistency 1")
 
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html) as much as possible.
-
-## Generating Additional Data
-
-This is optional!
-
-If you'd like to generate your own radar and lidar data, see the
-[utilities repo](https://github.com/udacity/CarND-Mercedes-SF-Utilities) for
-Matlab scripts that can generate additional data.
-
-## Project Instructions and Rubric
-
-This information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/c3eb3583-17b2-4d83-abf7-d852ae1b9fff/concepts/4d0420af-0527-4c9f-a5cd-56ee0fe4f09e)
-for instructions and the project rubric.
+## Discussion
 
