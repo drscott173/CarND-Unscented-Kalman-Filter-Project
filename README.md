@@ -130,9 +130,7 @@ describe how probability mass shifts over time as objects move and sensors sense
 This works fine in small increments of time, dt < 0.05 seconds.  However, if we attempt
 to take large steps in time over the function space, the algorithm quickly diverges
 as the modeled uncertainties introduce wide variations in position, velocity and
-heading.
-
-We resolved this issue by inserting tiny prediction steps at even internvals of 0.05
+heading. We resolved this issue by inserting tiny prediction steps at even internvals of 0.05
 seconds in between sensor measurements.  This steps the Kalman filter along tiny dt
 increments, adancing the predicted state until we reach the given measurement time.  Once
 we reach the current time, we then adjust the model parameters.  This is far more stable.
