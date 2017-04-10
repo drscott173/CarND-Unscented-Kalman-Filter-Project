@@ -130,9 +130,9 @@ describe how probability mass shifts over time as objects move and sensors sense
 This works fine in small increments of time, dt < 0.05 seconds.  However, if we attempt
 to take large steps in time over the function space, the algorithm quickly diverges
 as the modeled uncertainties introduce wide variations in position, velocity and
-heading. We resolved this issue by inserting tiny prediction steps at even internvals of 0.05
-seconds in between sensor measurements.  This steps the Kalman filter along tiny dt
-increments, adancing the predicted state until we reach the given measurement time.  Once
+heading. We resolved this issue by inserting tiny prediction steps at even intervals of 0.05
+seconds in between sensor measurements.  This steps the Kalman filter along tiny time
+increments, advancing the predicted state until we reach the given measurement time.  Once
 we reach the current time, we then adjust the model parameters.  This is far more stable.
 
 2. Predicted angles are normalized to numbers between -pi and +pi.  This helps with
@@ -140,15 +140,21 @@ consistency measurements (NIS).
 
 3. The model needs to self-adjust depending on traffic conditions.  We introduced a grid
 search option that looks for optimal settings for the linear and angular acceleration (or,
-more accurately, the standard deviation in the 'noise' caused by accelerating straigth and
+more accurately, the standard deviation in the 'noise' caused by accelerating straight and
 in turns).  We noticed that the optimal values for the first data set are different from
 those in the second.  We could improve our model by noting when we're over or under-estimating
 the velocity and make adjustments to the noise.
 
 4. Large gaps in measurement can occur if you choose to just use radar (-r) or lidar (-l).  This
-introduces additionaly model instability.  We watch for significant leaps in velocity or position
+introduces additional model instability.  We watch for significant leaps in velocity or position
 to indicate that our model has, well, lost it. We then re-initialize our model to the latest
 measurement and restart our filter.  This is the modern equivalent to slapping the side of an
 old television that loses its signal, or smacking a vending machine when the Doritos are stuck.
+
+5. The CTRV model seems to struggle to handle sudden changes in velocity, as might occur
+when teenagers and daredevils drive.  We see this as spikes in the NIS graph.  I tried several
+ideas to smooth out the velocity predictions, or smooth out the initial conditions, while 
+elaborate and awesome, didn't add much value and in the end often caused a worst score.  More
+research is required here.
 
 
