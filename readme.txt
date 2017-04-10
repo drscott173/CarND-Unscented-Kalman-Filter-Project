@@ -20,7 +20,6 @@ There are several criteria that must be fulfilled to pass the project.
 - The RMSE of laser AND radar must be lower than radar only or laser only
 - The NIS of radar measurements must be between 0.35 and 7.81 in at least 80% of all radar update steps.
 
-
 PROJECT GRADING
 - I recommend a hall of fame for the lowest overall RMSE using laser AND radar.
 - I recommend to ask students to improve the initialization procedure and evaluate the RMSE during the first 20 steps.

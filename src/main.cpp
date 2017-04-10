@@ -8,33 +8,135 @@
 #include "ukf.h"
 #include "ground_truth_package.h"
 #include "measurement_package.h"
+#include <string>
+#include <unistd.h>
 
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
-void check_arguments(int argc, char* argv[]) {
-  string usage_instructions = "Usage instructions: ";
-  usage_instructions += argv[0];
-  usage_instructions += " path/to/input.txt output.txt";
+struct globalArgs_t {
+  bool debug;                 /* print out arguments but don't do anything else */
+  bool search;                /* search for optimal acceleration values */
+  bool radar;                 /* use radar; cleared by -l option that chooses laser*/
+  bool laser;                 /* use laser; cleared by -m option that chooses radar*/
+  char **inputFiles;          /* input files */
+  int numInputFiles;          /* # of input files */
+  bool valid;                 /* valid args */
+  float a_straight;           /* straight acceleration */
+  float a_turn;               /* turn acceleration */
+} globalArgs;
+ 
+static const char *optString = "dsrlha:A:";
 
-  bool has_valid_args = false;
+bool isFloat(string s) {
+  istringstream iss(s);
+  float dummy;
+  iss >> noskipws >> dummy;
+  return iss && iss.eof();     // Result converted to bool
+}
+
+void display_usage(char* argv[]) {
+  cout << "Usage: " << argv[0] << " options* path/to/input.txt output.txt" << endl;
+  cout << "  -d debug command line arguments" << endl;
+  cout << "  -h help" << endl;
+  cout << "  -a <float> standard deviation in acceleration when driving straight" << endl;
+  cout << "  -A <float> standard deviation in acceleration when turning" << endl;
+  cout << "  -l only use laser, e.g., turn off radar" << endl;
+  cout << "  -r only use radar, e.g., turn off laser" << endl;
+  cout << "  -s search for optimal acceleration values " << endl;
+  exit(EXIT_FAILURE);
+}
+
+void show_args(string in_file_name_, string out_file_name_) {
+  cout << "Input: " << in_file_name_ << endl;
+  cout << "Output: " << out_file_name_ << endl;
+  cout << "Search: " << globalArgs.search << endl;
+  cout << "Radar: " << globalArgs.radar << endl;
+  cout << "Laser: " << globalArgs.laser << endl;
+  cout << "Straight accel: " << globalArgs.a_straight << endl;
+  cout << "Turn accel: " << globalArgs.a_turn << endl;
+  exit(0);
+}
+
+void init_args() {
+  globalArgs.debug = false;
+  globalArgs.search = false;
+  globalArgs.radar = true;
+  globalArgs.laser = true;
+  globalArgs.inputFiles = NULL;
+  globalArgs.numInputFiles = 0;
+  globalArgs.valid = true;
+  globalArgs.a_straight = 0.6;  // 2.7
+  globalArgs.a_turn = 1.8;      // 3.2
+}
+
+void check_arguments(int argc, char* argv[]) {
+
+  init_args();
+  int opt;
+  float accel;
+
+  while ((opt = getopt(argc, argv, optString)) != -1) {
+    switch (opt) {
+    case 'a':
+      if (isFloat(optarg)) {
+	sscanf(optarg, "%f", &accel);
+	globalArgs.a_straight = accel;
+      }
+      else {
+	cout << "Linear acceleration -a must be a floating point number." << endl;
+	globalArgs.valid = false;
+      }
+      break;
+    case 'A':
+      if (isFloat(optarg)) {
+	sscanf(optarg, "%f", &accel);
+	globalArgs.a_turn = accel;
+      }
+      else {
+	cout << "Turn acceleration -A must be a floating point number." << endl;
+	globalArgs.valid = false;
+      }
+      break;
+    case 'd':
+      globalArgs.debug = true;
+      break;
+    case 's':
+      globalArgs.search = true;
+      break;
+    case 'l':
+      globalArgs.radar = false;
+      break;
+    case 'r':
+      globalArgs.laser = false;
+      break;
+    case 'h':
+    default:
+      cout << "default handling" << endl;
+      display_usage(argv);
+    }
+  }
+
+  globalArgs.inputFiles = argv + optind;
+  globalArgs.numInputFiles = argc - optind;
 
   // make sure the user has provided input and output files
-  if (argc == 1) {
-    cerr << usage_instructions << endl;
-  } else if (argc == 2) {
-    cerr << "Please include an output file.\n" << usage_instructions << endl;
-  } else if (argc == 3) {
-    has_valid_args = true;
-  } else if (argc > 3) {
-    cerr << "Too many arguments.\n" << usage_instructions << endl;
+  if (globalArgs.numInputFiles < 1) {
+    globalArgs.valid = false;
+  } else if (globalArgs.numInputFiles == 1) {
+    cerr << "Please include an output file." << endl;
+    globalArgs.valid = false;
+  } else if (globalArgs.numInputFiles > 2) {
+    cerr << "Too many arguments." << endl;
+    globalArgs.valid = false;
   }
 
-  if (!has_valid_args) {
-    exit(EXIT_FAILURE);
+  if (!globalArgs.valid) {
+    display_usage(argv);
   }
+
 }
 
 void check_files(ifstream& in_file, string& in_name,
@@ -50,17 +152,31 @@ void check_files(ifstream& in_file, string& in_name,
   }
 }
 
+bool skip_measurement(MeasurementPackage m) {
+  if (m.sensor_type_ == MeasurementPackage::LASER) {
+    return fabs(m.raw_measurements_[0]) < 0.0001;
+  }
+  if (m.sensor_type_ == MeasurementPackage::RADAR) {
+    return fabs(m.raw_measurements_[2]) < 0.0001;
+  }
+  return false;
+}
+
 int main(int argc, char* argv[]) {
 
   check_arguments(argc, argv);
-
-  string in_file_name_ = argv[1];
+  
+  string in_file_name_ = globalArgs.inputFiles[0];
   ifstream in_file_(in_file_name_.c_str(), ifstream::in);
 
-  string out_file_name_ = argv[2];
+  string out_file_name_ = globalArgs.inputFiles[1];
   ofstream out_file_(out_file_name_.c_str(), ofstream::out);
 
   check_files(in_file_, in_file_name_, out_file_, out_file_name_);
+
+  if (globalArgs.debug) {
+    show_args(in_file_name_, out_file_name_);
+  }
 
   /**********************************************
    *  Set Measurements                          *
@@ -155,24 +271,28 @@ int main(int argc, char* argv[]) {
   out_file_ << "vy_true" << "\t";
   out_file_ << "NIS" << "\n";
 
-
   Tools tools;
   double best_score = 1e9, best_i=0.0, best_j=0.0;
 
   // was 2.8, 3.2
 
-  if (true) {
-    for (int i=0; i < 200; i++) {
+  if (globalArgs.search) {
+    for (int i=0; i < 40; i++) {
       cout << "**Loop " << i << endl;
-      for (int j=0; j < 200; j++) {
+      for (int j=0; j < 40; j++) {
 
-	ukf.Setup(i*0.02, j*0.02);
+	ukf.Setup(i*0.1, j*0.1);
 	  //	ukf.Setup(2.7+i*0.01, 3.1+j*0.01);
 	
 	for (size_t k = 0; k < number_of_measurements; ++k) {
+	  if (skip_measurement(measurement_pack_list[k])) continue;
 	  
+	  bool isLaser = (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER);
+	  bool isRadar = (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR);
+	  bool skip = (isLaser && !globalArgs.laser) || (isRadar && !globalArgs.radar);
+
 	  // Call the UKF-based fusion
-	  ukf.ProcessMeasurement(measurement_pack_list[k]);
+	  ukf.ProcessMeasurement(measurement_pack_list[k], skip);
 	  
 	  // convert ukf x vector to cartesian to compare to ground truth
 	  VectorXd ukf_x_cartesian_ = VectorXd(4);
@@ -195,7 +315,7 @@ int main(int argc, char* argv[]) {
 	  best_i = i;
 	  best_j = j;
 	  //	  cout << "Using accel straight " << (2.7+i*0.01) << " turn " << (3.1+j*0.01) << endl;
-	  cout << "Using accel straight " << (0.02*i) << " turn " << (0.02*j) << endl;
+	  cout << "Using accel straight " << (0.1*i) << " turn " << (0.1*j) << endl;
 	}
 	
 	estimations.clear();
@@ -203,31 +323,28 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+  //  ukf.Setup(0.6, 0.1) // for second data set
+  //  ukf.Setup(2.8, 3.2) // for first data set
 
-  cout << "**Doing main loop**" << endl;
+  if (globalArgs.search) {
+    ukf.Setup(0.1*best_i, 0.1*best_j);
+  }
+  else {
+    ukf.Setup(globalArgs.a_straight, globalArgs.a_turn);
+  }
 
-  // ukf.Setup(0.56, 0.02); // for second data set
-  //  ukf.Setup(2.8, 3.2);
-
-  //  2.8, 3.2 in scenario 1
-  // 0.56, 0.02 in scenario 2
-  ukf.Setup(0.02*best_i, 0.02*best_j);
-
-  //  ukf.Setup(2.8, 3.2);
-  //  ukf.Setup(0.8, 0.8);
-  //  ukf.Setup(1.4, 1.6); 
-  //  ukf.Setup(2.8, 3.2);
-  //  ukf.Setup(0.56, 0.02);
-  //  ukf.Setup(0.02*best_i, 0.02*best_j);
-  //  ukf.Setup(0.3, 0.3);
-  //  ukf.Setup(2.7+best_i*0.01, 3.1+best_j*0.01);
-
-  //  ukf.Setup(best_i*0.2, best_j*0.2);
+  int radar_count = 0;
+  int ok_nis_count = 0;
+  
   for (size_t k = 0; k < number_of_measurements; ++k) {
+    if (skip_measurement(measurement_pack_list[k])) continue;
+
+    bool isLaser = (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER);
+    bool isRadar = (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR);
+    bool skip = (isLaser && !globalArgs.laser) || (isRadar && !globalArgs.radar);
 
     // Call the UKF-based fusion
-    ukf.ProcessMeasurement(measurement_pack_list[k]);
-    //    cout << k << ") " << ukf.x_ << endl;
+    ukf.ProcessMeasurement(measurement_pack_list[k], skip);
 
     // output the estimation
     out_file_ << ukf.x_(0) << "\t"; // pos1 - est
@@ -237,7 +354,7 @@ int main(int argc, char* argv[]) {
     out_file_ << ukf.x_(4) << "\t"; // yaw_rate -est
 
     // output the measurements
-    if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER) {
+    if (isLaser) {
       // output the estimation
 
       // p1 - meas
@@ -245,7 +362,7 @@ int main(int argc, char* argv[]) {
 
       // p2 - meas
       out_file_ << measurement_pack_list[k].raw_measurements_(1) << "\t";
-    } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
+    } else if (isRadar) {
       // output the estimation in the cartesian coordinates
       float ro = measurement_pack_list[k].raw_measurements_(0);
       float phi = measurement_pack_list[k].raw_measurements_(1);
@@ -261,9 +378,16 @@ int main(int argc, char* argv[]) {
 
     // output the NIS values
     
-    if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER) {
+    if (isLaser) {
       out_file_ << ukf.NIS_laser_ << "\n";
-    } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
+    } else if (isRadar) {
+      radar_count++;
+      if ((ukf.NIS_radar_ >= 0.35) && (ukf.NIS_radar_ <= 7.81)) {
+	ok_nis_count++;
+      }
+      else {
+	//	cout << "Bad NIS " << ukf.NIS_radar_ << endl;
+      }
       out_file_ << ukf.NIS_radar_ << "\n";
     }
 
@@ -287,7 +411,15 @@ int main(int argc, char* argv[]) {
   }
 
   // compute the accuracy (RMSE)
-    cout << "Accuracy - RMSE:" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
+  cout << "Accuracy - RMSE:" << endl << tools.CalculateRMSE(estimations, ground_truth) << endl;
+
+  // show NIS
+  if (radar_count < 1) {
+    cout << "No radar readings, no NIS to report." << endl;
+  }
+  else {
+    cout << "Valid NIS: " << (float(ok_nis_count)/float(radar_count))*100 << "% " << endl;
+  }
 
   // close files
   if (out_file_.is_open()) {

@@ -6,10 +6,12 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <algorithm>
 #include "tools.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using std::min;
 
 class UKF {
  private:
@@ -27,11 +29,13 @@ class UKF {
   void UpdateStateWithLaser(VectorXd z);
   void UpdateStateCommon(VectorXd z,      // actual measurement
 			 VectorXd z_pred, // predicted measurement
+			 double &NIS,     // normalized innovation squared (consistency measure)
 			 MatrixXd Zsig,   // predicted sigma points
 			 MatrixXd &Tc,     // Cross correlation matrix
 			 MatrixXd S,      // Measurement covariance (uncertainty)
 			 MatrixXd R);    // Measurement noise covariance (uncertainty)
-  
+  bool UnstableState();
+  void Calibrate();
 
  public:
 
@@ -147,7 +151,7 @@ class UKF {
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
    */
-  void ProcessMeasurement(MeasurementPackage meas_package);
+  void ProcessMeasurement(MeasurementPackage meas_package, bool skip);
 
   /**
    * Prediction Predicts sigma points, the state, and the state covariance
@@ -160,13 +164,13 @@ class UKF {
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateLidar(MeasurementPackage meas_package, bool skip);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateRadar(MeasurementPackage meas_package);
+  void UpdateRadar(MeasurementPackage meas_package, bool skip);
 
   /**
    * Inititialize all variables
