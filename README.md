@@ -59,7 +59,7 @@ are shown in red.
 The figure below shows how the velocity varies over time, jumping
 from a standing start to jerky variations between 2 and 4 meters
 per second. Our prediction has high frequency noise at first, but quickly
-dampens down, creating a model that uses the a value closer to the
+dampens down, creating a model that uses a value closer to the
 mean velocity to predict position.
 
 ![Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1")
@@ -70,7 +70,7 @@ which means most of the measurements would fall within our model's predicted are
 of uncertainty.
 
 Here's how to read this image.  The green line on top represents variations in
-the Y position through time.  The blue line below repreasents variations in the X
+the Y position through time.  The blue line below represents variations in the X
 position through time.  Our vehicle is essentially oscillating back in both X and Y,
 forming a figure 8.
 
@@ -139,7 +139,7 @@ we reach the current time, we then adjust the model parameters.  This is far mor
 consistency measurements (NIS).
 
 3. The model needs to self-adjust depending on traffic conditions.  We introduced a grid
-search option that looks for optimal settings for the linear and angular acceleration (or,
+search option (-s) that looks for optimal settings for the linear and angular acceleration (or,
 more accurately, the standard deviation in the 'noise' caused by accelerating straight and
 in turns).  We noticed that the optimal values for the first data set are different from
 those in the second.  We could improve our model by noting when we're over or under-estimating
