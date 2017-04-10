@@ -22,17 +22,17 @@ test
 
 ## Overview
 
-[Position 1](images/position_1.png?raw=true "Predicting Position 1")
+![Position 1](images/position_1.png?raw=true "Predicting Position 1")
 
-[Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1")
+![Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1")
 
-[NIS 1](images/nis_1.png?raw=true "NIS Consistency 1")
+![NIS 1](images/nis_1.png?raw=true "NIS Consistency 1")
 
-[Position 2](images/position_2.png?raw=true "Predicting Position 1")
+![Position 2](images/position_2.png?raw=true "Predicting Position 1")
 
-[Velocity 2](images/velocity_2.png?raw=true "Predicting Velocity 1")
+![Velocity 2](images/velocity_2.png?raw=true "Predicting Velocity 1")
 
-[NIS 2](images/nis_2.png?raw=true "NIS Consistency 1")
+![NIS 2](images/nis_2.png?raw=true "NIS Consistency 1")
 
 ## Editor Settings
 
