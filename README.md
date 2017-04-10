@@ -22,9 +22,9 @@ test
 
 ## Overview
 
-![Position 1](images/position_1.png?raw=true "Predicting Position 1")
+![Position 1](images/position_1.png?raw=true "Predicting Position 1"){:width="320px"}
 
-![Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1")
+![Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1"){:width="320px"}
 
 ![NIS 1](images/nis_1.png?raw=true "NIS Consistency 1")
 
