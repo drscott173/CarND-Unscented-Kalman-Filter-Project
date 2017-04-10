@@ -34,11 +34,17 @@ test
 
 ## Sample 1
 
+Use the following command:
+
+`./UnscentedKF ../data/sample-laser-radar-measurement-data-1.txt out1.txt`
+
+We interpret the output of out1.txt below.
+
 The figure below shows how the position varies over time, forming
 a figure 8.  The actual positions are shown in blue and our predictions
 are shown in red.
 
-![Position 1](images/position_1.png?raw=true "Predicting Position 1"){:width="320px"}
+![Position 1](images/position_1.png?raw=true "Predicting Position 1")
 
 The figure below shows how the velocity varies over time, jumping
 from a standing start to jerky variations between 2 and 4 meters
@@ -46,7 +52,7 @@ per second. Our prediction has high frequency noise at first, but quickly
 dampens down, creating a model that uses the a value closer to the
 mean velocity to predict position.
 
-![Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1"){:width="320px"}
+![Velocity 1](images/velocity_1.png?raw=true "Predicting Velocity 1")
 
 Finally, the figure below shows our NIS values for the chi square distribution.
 We want most of our values to be below 7.8 according to the chi square table, 
@@ -68,13 +74,17 @@ area as a result.
 
 ## Sample 2
 
+Execute the following:
+
+`./UnscentedKF ../data/sample-laser-radar-measurement-data-2.txt out2.txt`
+
 As before, we show the position of our object over time in blue.  Our
 predicted position is in red.  The model nails it.
 
 ![Position 2](images/position_2.png?raw=true "Predicting Position 1")
 
 The object in this sample has a velocity that first jumps from a standing start,
-then oscillates in sinewave. The actual velocity is in blue, our predictions
+then oscillates in a sine wave. The actual velocity is in blue, our predictions
 are in red.  We can see that our model has an initial impulse and assumes the
 object will keep accelerating quickly from that jumpstart. That doesn't happen,
 of course, so our model tamps down.  When velocity changes direction our model
